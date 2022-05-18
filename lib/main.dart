@@ -29,33 +29,73 @@ class SubjectInfo {
     late String name, start, end;
     late Color color;
     late int parciales;
-    late Map<String, String> ratings;
+    late double p1, p2, p3, p4, p5;
 
     SubjectInfo(String _name, int _parciales, String _start, String _end, Color _color) {
-        id = _name;
-        name = _name;
-        start = _start;
-        end = _end;
-        color = _color;
-        ratings = HashMap();
-        parciales = _parciales;
+      id = _name;
+      name = _name;
+      start = _start;
+      end = _end;
+      color = _color;
+      parciales = _parciales;
+      p1 = p2 = p3 = p4 = p5 = -1;
     }
 
-    setRating(int p, double prom) {
-        ratings.addAll({p.toString(): prom.toString()});
+    setRating(int p, double calif) {
+      switch (p) {
+        case 1:
+          p1 = calif;
+          break;
+        case 2:
+          p2 = calif;
+          break;
+        case 3:
+          p3 = calif;
+          break;
+        case 4:
+          p4 = calif;
+          break;
+        case 5:
+          p5 = calif;
+          break;
+      }
     }
 
-    @override
-    String toString() {
-        return "nombre: $name inicio: $start fin: $end color: $color ";
+    SubjectInfo.fromJson(Map<String, dynamic> json) {
+      id = json['id']! as String;
+      name = json['name']! as String;
+      start = json['start']! as String;
+      end = json['end']! as String;
+      color = getColor(json['color']! as String);
+      parciales = json['parciales']! as int;
+      p1 = json['p1']! as double;
+      p2 = json['p2']! as double;
+      p3 = json['p3']! as double;
+      p4 = json['p4']! as double;
+      p5 = json['p5']! as double;
     }
 
-    HashMap<String, String> createDataforDatabase() {
-        final baseMap = <String, String>{'id': id, 'nombre': name, 'horaInicio': start, 
-                                         'horaFin': end, 'parciales': parciales.toString(), 
-                                         'color': color.toString(),'ratings': jsonEncode(ratings)};
-        final mapOf = HashMap<String, String>.of(baseMap);
-        return mapOf;
+    Map<String, dynamic> toJson() {
+      return {
+        'id': id,
+        'name': name,
+        'start': start,
+        'end': end,
+        'color': color.toString(),
+        'parciales': parciales,
+        'p1': p1,
+        'p2': p2,
+        'p3': p3,
+        'p4': p4,
+        'p5': p5,
+      };
+    }
+
+    Color getColor(String c) {
+      String valueString = c.split('(0x')[1].split(')')[0]; // kind of hacky..
+      int value = int.parse(valueString, radix: 16);
+      Color color = Color(value);
+      return color;
     }
 }
 
@@ -72,16 +112,29 @@ class ProfesorInfo {
         color = _color;
     }
 
-    @override
-    String toString() {
-        return "nombre: $name Correo: $email materia: $mate color: $color ";
+    ProfesorInfo.fromJson(Map<String, dynamic> json) {
+        id = json['id']! as String;
+        name = json['name']! as String;
+        email = json['email']! as String;
+        mate = json['mate']! as String;
+        color = getColor(json['color']! as String);
     }
 
-    HashMap<String, String> createDataforDatabase() {
-        final baseMap = <String, String>{'id': id,'nombre': name, 'email': email, 
-                                         'materia': mate, 'color': color.toString()};
-        final mapOf = HashMap<String, String>.of(baseMap);
-        return mapOf;
+    Map<String, dynamic> toJson() {
+        return {
+            'id': id,
+            'name': name,
+            'email': email,
+            'mate': mate,
+            'color': color.toString(),
+        };
+    }
+
+    Color getColor(String c) {
+      String valueString = c.split('(0x')[1].split(')')[0]; // kind of hacky..
+      int value = int.parse(valueString, radix: 16);
+      Color color = Color(value);
+      return color;
     }
 }
 
@@ -114,42 +167,41 @@ class EventInfo {
     
   }
 
-  @override
-  String toString() {
-      return "nombre: $name materia: $mate fecha: $dia / $mes / $anio color: $color ";
+  EventInfo.fromJson(Map<String, dynamic> json) {
+      id = json['id']! as String;
+      name = json['name']! as String;
+      mate = json['mate']! as String;
+      dia = json['dia']! as String;
+      mes = json['mes']! as String;
+      anio = json['anio']! as String;
+      color = getColor(json['color']! as String);
+      isImportant = json['isImportant']! as int;
   }
 
-  HashMap<String, String> createDataforDatabase() {
-      final baseMap = <String, String>{'id': id,'nombre': name, 'materia': mate, 'dia': dia, 
-                                       'mes': mes, 'anio': anio, 'color': color.toString()};
-      final mapOf = HashMap<String, String>.of(baseMap);
-      return mapOf;
+  Map<String, dynamic> toJson() {
+      return {
+          'id': id,
+          'name': name,
+          'mate': mate,
+          'dia': dia,
+          'mes': mes,
+          'anio': anio,
+          'color': color.toString(),
+          'isImportant': isImportant,
+      };
   }
-}
 
-class Materia {
-    String nombre = "";
-    int parciales = 0;
-    int color = 0; //100-900
-
-    Materia(String nom, int p, int c){
-        nombre = nom;
-        parciales = p;
-        color = c;
+  Color getColor(String c) {
+      String valueString = c.split('(0x')[1].split(')')[0]; // kind of hacky..
+      int value = int.parse(valueString, radix: 16);
+      Color color = Color(value);
+      return color;
     }
-}
 
-//Prueba para materias,
-List<Materia> listaMaterias = [
-  Materia("Materia 1",3,100),
-  Materia("Materia 2",4,200),
-  Materia("Materia 3",3,300),
-  Materia("Materia 4",4,400),
-  Materia("Materia 5",3,500),
-  Materia("Materia 6",5,600),
-  Materia("Materia 7",3,700),
-  Materia("Materia 8",2,800),
-];
+  void setColor(Color c) {
+    color = c;
+  }
+}
 
 class MyHomePage extends StatefulWidget {
     const MyHomePage({Key? key}) : super(key: key);
@@ -186,7 +238,7 @@ class _MyHomePageState extends State<MyHomePage> {
                         MySubjectPage(),
                         EventPage(),
                         ProfesorPage(),
-                        getMaterias(),
+                        SubjectsGradesPage(),
                     ],
                 ),
             ),
@@ -199,13 +251,8 @@ class _MyHomePageState extends State<MyHomePage> {
       List<ProfesorInfo> p = [];
 
       db.collection('Asignaturas').get().then((value) {
-        value.docs.forEach((element) {
-          String valueString = element.data()['color'].split('(0x')[1].split(')')[0]; // kind of hacky..
-          int value = int.parse(valueString, radix: 16);
-          Color color = Color(value);
-          s.add(SubjectInfo(element.data()['nombre'], int.parse(element.data()['parciales']), element.data()['horaInicio'], element.data()['horaFin'], color));
-          String r = jsonDecode(element.data()['ratings']);
-          print(r);
+        value.docs.forEach((doc) {
+          s.add(SubjectInfo.fromJson(doc.data()));
         });
 
         if(s.isNotEmpty && subjects.isEmpty) {
@@ -213,12 +260,8 @@ class _MyHomePageState extends State<MyHomePage> {
         }
       });
       db.collection('Eventos').get().then((value) {
-        value.docs.forEach((element) {
-          String valueString = element.data()['color'].split('(0x')[1].split(')')[0]; // kind of hacky..
-          int value = int.parse(valueString, radix: 16);
-          Color color = Color(value);
-          e.add(EventInfo(element.data()['nombre'], element.data()['materia'],
-                          element.data()['dia'], element.data()['mes'], element.data()['anio'], color));
+        value.docs.forEach((doc) {
+          e.add(EventInfo.fromJson(doc.data()));
         });
 
         if(e.isNotEmpty && events.isEmpty) {
@@ -230,11 +273,8 @@ class _MyHomePageState extends State<MyHomePage> {
         }
       });
       db.collection('Profesores').get().then((value) {
-        value.docs.forEach((element) {
-          String valueString = element.data()['color'].split('(0x')[1].split(')')[0]; // kind of hacky..
-          int value = int.parse(valueString, radix: 16);
-          Color color = Color(value);
-          p.add(ProfesorInfo(element.data()['nombre'], element.data()['email'], element.data()['materia'], color)); 
+        value.docs.forEach((doc) {
+          p.add(ProfesorInfo.fromJson(doc.data()));
         });
 
         if(p.isNotEmpty && teachers.isEmpty) {
@@ -243,8 +283,12 @@ class _MyHomePageState extends State<MyHomePage> {
       });
     }
 
+
+
     Widget MySubjectPage() {
-      InitializeList();
+      if(subjects.isEmpty || teachers.isEmpty || events.isEmpty) {
+        InitializeList();
+      }
         return Scaffold(
             body: ListView.builder(
                 itemCount: subjects.length,
@@ -275,9 +319,7 @@ class _MyHomePageState extends State<MyHomePage> {
                         children: <Widget>[
                           TextButton(onPressed: () => {
                             db.collection('Asignaturas').doc(subjects[index].id).delete(),
-                            setState(() {
-                              subjects.removeAt(index);
-                            }),
+                            setState(() => subjects.removeAt(index)),
                           }, child: const Text('Eliminar')),
                         ],
                       )
@@ -294,24 +336,24 @@ class _MyHomePageState extends State<MyHomePage> {
       );
     }
 
-    Widget getMaterias() {
+    Widget SubjectsGradesPage() {
         return ListView.separated(
                 padding: const EdgeInsets.all(8),
-                itemCount: listaMaterias.length,
+                itemCount: subjects.length,
                 itemBuilder: (BuildContext context, int index) {
                     return GestureDetector(
                         onTap: () {
                             Navigator.push(
                                 context,
-                                MaterialPageRoute(builder: (context) => InformacionMateria(materia : listaMaterias[index])),
+                                MaterialPageRoute(builder: (context) => SubjectInformation(materia : subjects[index])),
                             );
                         }, 
                         child: SizedBox(
                             height: 50,
                             child: Card(
                                 elevation: 6,
-                                color: Colors.red[listaMaterias[index].color],    
-                                child: Center(child: Text(listaMaterias[index].nombre)),
+                                color: subjects[index].color,
+                                child: Center(child: Text(subjects[index].name)),
                             ),
                         ),
                     );
@@ -589,7 +631,7 @@ class _MyHomePageState extends State<MyHomePage> {
                           if(_name.isNotEmpty && _start.isNotEmpty && _end.isNotEmpty) {
                             final s = SubjectInfo(_name, _parcial, _start, _end, colorC);
                             s.setRating(1, 7.8);
-                            db.collection("Asignaturas").doc(s.id).set(s.createDataforDatabase());
+                            db.collection("Asignaturas").doc(s.id).set(s.toJson());
                             setState(() => subjects.add(s));
                           }
                           Navigator.pop(context, 'Guardar');
@@ -794,7 +836,7 @@ class _MyHomePageState extends State<MyHomePage> {
             onPressed: (() {
               if (_name != "" && _email != "" && _mate != "") {
                 final p = ProfesorInfo(_name, _email, _mate, colorC);
-                db.collection("Profesores").doc(p.id).set(p.createDataforDatabase());
+                db.collection("Profesores").doc(p.id).set(p.toJson());
                 setState(() => teachers.add(p));
               }
               Navigator.pop(context, 'Guardar');
@@ -1044,7 +1086,7 @@ class _MyHomePageState extends State<MyHomePage> {
             onPressed: (() {
               if(_name != "" && _mate != "" && _dia != "" && _mes != "" && _anio != ""){
                 final e = EventInfo(_name, _mate, _dia, _mes, _anio, colorC);
-                db.collection("Eventos").doc(e.id).set(e.createDataforDatabase());
+                db.collection("Eventos").doc(e.id).set(e.toJson());
                 setState(() => events.add(e));
                 colorSort();
               }
@@ -1073,17 +1115,17 @@ class _MyHomePageState extends State<MyHomePage> {
 
 }
 
-class InformacionMateria extends StatefulWidget {
-   const InformacionMateria({Key? key, required this.materia}) : super(key: key);
+class SubjectInformation extends StatefulWidget {
+   const SubjectInformation({Key? key, required this.materia}) : super(key: key);
 
-  final Materia materia;
+  final SubjectInfo materia;
 
   @override
-  State<InformacionMateria> createState() => _InformacionMateria();
+  State<SubjectInformation> createState() => _SubjectInformation();
 
 }
 
-class _InformacionMateria extends State<InformacionMateria> {
+class _SubjectInformation extends State<SubjectInformation> {
     final myController = TextEditingController();
     String _dropdownValue = "Parcial 1";
 
@@ -1091,7 +1133,7 @@ class _InformacionMateria extends State<InformacionMateria> {
     Widget build(BuildContext context) {
     return Scaffold(
         appBar: AppBar(
-            title: Text(widget.materia.nombre),
+            title: Text(widget.materia.name),
         ),
         body: Center(
             child: ListView(
@@ -1183,3 +1225,18 @@ class _InformacionMateria extends State<InformacionMateria> {
     );
   }
 }
+
+
+/*
+  Como actualizar datos de un evento
+
+  db.collection('nombre de la coleccion ej. Asignaturas').where('id', isEqualTo: subjects[index].id).get().then((value) {
+    value.docs.forEach((doc) {
+      doc.reference.update({
+        Cada dato que guardes tiene que tener el tipo tojson como el siguiente:
+        'color': Colors.red.toString(), 
+      });
+    });
+  })
+
+*/
