@@ -6,83 +6,136 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 void main() {
-    WidgetsFlutterBinding.ensureInitialized();
-    Firebase.initializeApp().then((value) {
-        runApp(const MyApp());
-    });
+  WidgetsFlutterBinding.ensureInitialized();
+  Firebase.initializeApp().then((value) {
+    runApp(const MyApp());
+  });
 }
 
 class MyApp extends StatelessWidget {
-    const MyApp({Key? key}) : super(key: key);
-    
-    @override
-    Widget build(BuildContext context) {
-        return const MaterialApp(
-            title: 'Agenda Escolar',
-            home: MyHomePage(),
-        );
-    }
+  const MyApp({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return const MaterialApp(
+      title: 'Agenda Escolar',
+      home: MyHomePage(),
+    );
+  }
 }
 
 class SubjectInfo {
-    late String id;
-    late String name, start, end;
-    late Color color;
-    late int parciales;
-    late Map<String, String> ratings;
+  late String id;
+  late String name, start, end;
+  late Color color;
+  late int parciales;
+  late double p1, p2, p3, p4, p5;
 
-    SubjectInfo(String _name, int _parciales, String _start, String _end, Color _color) {
-        id = _name;
-        name = _name;
-        start = _start;
-        end = _end;
-        color = _color;
-        ratings = HashMap();
-        parciales = _parciales;
-    }
+  SubjectInfo(String _name, int _parciales, String _start, String _end, Color _color) {
+    id = _name;
+    name = _name;
+    start = _start;
+    end = _end;
+    color = _color;
+    parciales = _parciales;
+    p1 = p2 = p3 = p4 = p5 = -1;
+  }
 
-    setRating(int p, double prom) {
-        ratings.addAll({p.toString(): prom.toString()});
+  setRating(int p, double calif) {
+    switch (p) {
+      case 1:
+        p1 = calif;
+        break;
+      case 2:
+        p2 = calif;
+        break;
+      case 3:
+        p3 = calif;
+        break;
+      case 4:
+        p4 = calif;
+        break;
+      case 5:
+        p5 = calif;
+        break;
     }
+  }
 
-    @override
-    String toString() {
-        return "nombre: $name inicio: $start fin: $end color: $color ";
-    }
+  SubjectInfo.fromJson(Map<String, dynamic> json) {
+    id = json['id']! as String;
+    name = json['name']! as String;
+    start = json['start']! as String;
+    end = json['end']! as String;
+    color = getColor(json['color']! as String);
+    parciales = json['parciales']! as int;
+    p1 = json['p1']! as double;
+    p2 = json['p2']! as double;
+    p3 = json['p3']! as double;
+    p4 = json['p4']! as double;
+    p5 = json['p5']! as double;
+  }
 
-    HashMap<String, String> createDataforDatabase() {
-        final baseMap = <String, String>{'id': id, 'nombre': name, 'horaInicio': start, 
-                                         'horaFin': end, 'parciales': parciales.toString(), 
-                                         'color': color.toString(),'ratings': jsonEncode(ratings)};
-        final mapOf = HashMap<String, String>.of(baseMap);
-        return mapOf;
-    }
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'name': name,
+      'start': start,
+      'end': end,
+      'color': color.toString(),
+      'parciales': parciales,
+      'p1': p1,
+      'p2': p2,
+      'p3': p3,
+      'p4': p4,
+      'p5': p5,
+    };
+  }
+
+  Color getColor(String c) {
+    String valueString = c.split('(0x')[1].split(')')[0]; // kind of hacky..
+    int value = int.parse(valueString, radix: 16);
+    Color color = Color(value);
+    return color;
+  }
 }
 
 class ProfesorInfo {
-    late String id;
-    late String name, email, mate;
-    late Color color;
+  late String id;
+  late String name, email, mate;
+  late Color color;
 
-    ProfesorInfo(String _name, String _email, String _mate, Color _color) {
-        id = _name;
-        name = _name;
-        email = _email;
-        mate = _mate;
-        color = _color;
-    }
+  ProfesorInfo(String _name, String _email, String _mate, Color _color) {
+    id = _name;
+    name = _name;
+    email = _email;
+    mate = _mate;
+    color = _color;
+  }
 
-    @override
-    String toString() {
-        return "nombre: $name Correo: $email materia: $mate color: $color ";
-    }
+  ProfesorInfo.fromJson(Map<String, dynamic> json) {
+    id = json['id']! as String;
+    name = json['name']! as String;
+    email = json['email']! as String;
+    mate = json['mate']! as String;
+    color = getColor(json['color']! as String);
+  }
 
-    HashMap<String, String> createDataforDatabase() {
-        final baseMap = <String, String>{'id': id,'nombre': name, 'email': email, 
-                                         'materia': mate, 'color': color.toString()};
-        final mapOf = HashMap<String, String>.of(baseMap);
-        return mapOf;
-    }
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'name': name,
+      'email': email,
+      'mate': mate,
+      'color': color.toString(),
+    };
+  }
+
+  Color getColor(String c) {
+    String valueString = c.split('(0x')[1].split(')')[0]; // kind of hacky..
+    int value = int.parse(valueString, radix: 16);
+    Color color = Color(value);
+    return color;
+  }
 }
 
 class EventInfo {
@@ -91,14 +144,14 @@ class EventInfo {
   late Color color;
   late int isImportant;
   EventInfo(String _name, String _mate, String _dia, String _mes, String _anio, Color _color) {
-      id = _name;
-      name = _name;
-      mate = _mate;
-      dia = _dia;
-      mes = _mes;
-      anio = _anio;
-      color = _color;
-      isImportant = setColorId();
+    id = _name;
+    name = _name;
+    mate = _mate;
+    dia = _dia;
+    mes = _mes;
+    anio = _anio;
+    color = _color;
+    isImportant = setColorId();
   }
 
   int setColorId() {
@@ -111,120 +164,137 @@ class EventInfo {
         return 3;
       }
     }
-    
+
   }
 
-  @override
-  String toString() {
-      return "nombre: $name materia: $mate fecha: $dia / $mes / $anio color: $color ";
+  EventInfo.fromJson(Map<String, dynamic> json) {
+    id = json['id']! as String;
+    name = json['name']! as String;
+    mate = json['mate']! as String;
+    dia = json['dia']! as String;
+    mes = json['mes']! as String;
+    anio = json['anio']! as String;
+    color = getColor(json['color']! as String);
+    isImportant = json['isImportant']! as int;
   }
 
-  HashMap<String, String> createDataforDatabase() {
-      final baseMap = <String, String>{'id': id,'nombre': name, 'materia': mate, 'dia': dia, 
-                                       'mes': mes, 'anio': anio, 'color': color.toString()};
-      final mapOf = HashMap<String, String>.of(baseMap);
-      return mapOf;
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'name': name,
+      'mate': mate,
+      'dia': dia,
+      'mes': mes,
+      'anio': anio,
+      'color': color.toString(),
+      'isImportant': isImportant,
+    };
+  }
+
+  Color getColor(String c) {
+    String valueString = c.split('(0x')[1].split(')')[0]; // kind of hacky..
+    int value = int.parse(valueString, radix: 16);
+    Color color = Color(value);
+    return color;
+  }
+
+  void setColor(Color c) {
+    color = c;
   }
 }
 
 class MyHomePage extends StatefulWidget {
-    const MyHomePage({Key? key}) : super(key: key);
-    
-    @override
-    State<MyHomePage> createState() => _MyHomePageState();
+  const MyHomePage({Key? key}) : super(key: key);
+
+  @override
+  State<MyHomePage> createState() => _MyHomePageState();
 }
 
 class _MyHomePageState extends State<MyHomePage> {
 
-    List<SubjectInfo> subjects = [];
-    List<EventInfo> events = [];
-    List<ProfesorInfo> teachers = [];
-    final db  = FirebaseFirestore.instance;
-    
-    @override
-    Widget build(BuildContext context) {
-        return DefaultTabController(
-            length: 4,
-            child: Scaffold(
-                appBar: AppBar(
-                    bottom: const TabBar(
-                        tabs: [
-                            Tab(icon: Icon(Icons.dashboard_outlined)),
-                            Tab(icon: Icon(Icons.event_outlined)),
-                            Tab(icon: Icon(Icons.accessibility_new_outlined)),
-                            Tab(icon: Icon(Icons.assessment_outlined,)),
-                        ],
-                    ),
-                    title: const Text('Agenda Escolar'),
-                ),
-                body: TabBarView(
-                    children: <Widget>[
-                        MySubjectPage(),
-                        EventPage(),
-                        ProfesorPage(),
-                        SubjectsGradesPage(),
-                    ],
-                ),
-            ),
-        );
-    }
+  List<SubjectInfo> subjects = [];
+  List<EventInfo> events = [];
+  List<ProfesorInfo> teachers = [];
+  final db  = FirebaseFirestore.instance;
 
-    void InitializeList() {
-      List<SubjectInfo> s = [];
-      List<EventInfo> e = [];
-      List<ProfesorInfo> p = [];
+  @override
+  Widget build(BuildContext context) {
+    return DefaultTabController(
+      length: 4,
+      child: Scaffold(
+        appBar: AppBar(
+          bottom: const TabBar(
+            tabs: [
+              Tab(icon: Icon(Icons.dashboard_outlined)),
+              Tab(icon: Icon(Icons.event_outlined)),
+              Tab(icon: Icon(Icons.accessibility_new_outlined)),
+              Tab(icon: Icon(Icons.assessment_outlined,)),
+            ],
+          ),
+          title: const Text('Agenda Escolar'),
+        ),
+        body: TabBarView(
+          children: <Widget>[
+            MySubjectPage(),
+            EventPage(),
+            ProfesorPage(),
+            SubjectsGradesPage(),
+          ],
+        ),
+      ),
+    );
+  }
 
-      db.collection('Asignaturas').get().then((value) {
-        value.docs.forEach((element) {
-          String valueString = element.data()['color'].split('(0x')[1].split(')')[0]; // kind of hacky..
-          int value = int.parse(valueString, radix: 16);
-          Color color = Color(value);
-          s.add(SubjectInfo(element.data()['nombre'], int.parse(element.data()['parciales']), element.data()['horaInicio'], element.data()['horaFin'], color));
-          String r = jsonDecode(element.data()['ratings']);
-          print(r);
-        });
+  void InitializeList() {
+    List<SubjectInfo> s = [];
+    List<EventInfo> e = [];
+    List<ProfesorInfo> p = [];
 
-        if(s.isNotEmpty && subjects.isEmpty) {
-          setState(() => subjects = s );
-        }
+    db.collection('Asignaturas').get().then((value) {
+      value.docs.forEach((doc) {
+        s.add(SubjectInfo.fromJson(doc.data()));
       });
-      db.collection('Eventos').get().then((value) {
-        value.docs.forEach((element) {
-          String valueString = element.data()['color'].split('(0x')[1].split(')')[0]; // kind of hacky..
-          int value = int.parse(valueString, radix: 16);
-          Color color = Color(value);
-          e.add(EventInfo(element.data()['nombre'], element.data()['materia'],
-                          element.data()['dia'], element.data()['mes'], element.data()['anio'], color));
-        });
 
-        if(e.isNotEmpty && events.isEmpty) {
-          setState(() => events = e );
-        }
+      if(s.isNotEmpty && subjects.isEmpty) {
+        setState(() => subjects = s );
+      }
 
-        if(events.isNotEmpty) {
-          colorSort();
-        }
+      if(subjects.isNotEmpty){
+        bubbleSort();
+      }
+    });
+    db.collection('Eventos').get().then((value) {
+      value.docs.forEach((doc) {
+        e.add(EventInfo.fromJson(doc.data()));
       });
-      db.collection('Profesores').get().then((value) {
-        value.docs.forEach((element) {
-          String valueString = element.data()['color'].split('(0x')[1].split(')')[0]; // kind of hacky..
-          int value = int.parse(valueString, radix: 16);
-          Color color = Color(value);
-          p.add(ProfesorInfo(element.data()['nombre'], element.data()['email'], element.data()['materia'], color)); 
-        });
 
-        if(p.isNotEmpty && teachers.isEmpty) {
-          setState(() => teachers = p );
-        }
+      if(e.isNotEmpty && events.isEmpty) {
+        setState(() => events = e );
+      }
+
+      if(events.isNotEmpty) {
+        colorSort();
+      }
+    });
+    db.collection('Profesores').get().then((value) {
+      value.docs.forEach((doc) {
+        p.add(ProfesorInfo.fromJson(doc.data()));
       });
-    }
 
-    Widget MySubjectPage() {
+      if(p.isNotEmpty && teachers.isEmpty) {
+        setState(() => teachers = p );
+      }
+    });
+  }
+
+  Widget MySubjectPage() {
+    if(subjects.isEmpty || teachers.isEmpty || events.isEmpty) {
       InitializeList();
-        return Scaffold(
-            body: ListView.builder(
-                itemCount: subjects.length,
-                itemBuilder: (BuildContext context, int index) {
+    }
+    return Scaffold(
+      body: ListView.builder(
+          itemCount: subjects.length,
+          itemBuilder: (BuildContext context, int index) {
             return Card(
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
               color: subjects[index].color,
@@ -239,8 +309,8 @@ class _MyHomePageState extends State<MyHomePage> {
                         style: const TextStyle(fontSize: 30)
                     ),
                     subtitle: Text(
-                        subjects[index].start + " - " + subjects[index].end,
-                        style: const TextStyle(height: 2, fontSize: 15),
+                      subjects[index].start + " - " + subjects[index].end,
+                      style: const TextStyle(height: 2, fontSize: 15),
                     ),
                     leading: const Icon(Icons.subject),
                   ),
@@ -251,9 +321,7 @@ class _MyHomePageState extends State<MyHomePage> {
                         children: <Widget>[
                           TextButton(onPressed: () => {
                             db.collection('Asignaturas').doc(subjects[index].id).delete(),
-                            setState(() {
-                              subjects.removeAt(index);
-                            }),
+                            setState(() => subjects.removeAt(index)),
                           }, child: const Text('Eliminar')),
                         ],
                       )
@@ -262,326 +330,346 @@ class _MyHomePageState extends State<MyHomePage> {
               ),
             );
           }
-        ),
-        floatingActionButton: FloatingActionButton(
-          onPressed: () => MyNewSubject(),
-          child: const Icon(Icons.add),
-        ),
-      );
-    }
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => MyNewSubject(),
+        child: const Icon(Icons.add),
+      ),
+    );
+  }
 
-    Widget SubjectsGradesPage() {
-        return ListView.separated(
-                padding: const EdgeInsets.all(8),
-                itemCount: subjects.length,
-                itemBuilder: (BuildContext context, int index) {
-                    return GestureDetector(
-                        onTap: () {
-                            Navigator.push(
-                                context,
-                                MaterialPageRoute(builder: (context) => SubjectInformation(materia : subjects[index])),
-                            );
-                        }, 
-                        child: SizedBox(
-                            height: 50,
-                            child: Card(
-                                elevation: 6,
-                                color: subjects[index].color,
-                                child: Center(child: Text(subjects[index].name)),
-                            ),
-                        ),
-                    );
-                },
-                separatorBuilder: (context, index) => const Divider(
-                    color: Colors.white,
-                ),
+  Widget SubjectsGradesPage() {
+    return ListView.separated(
+      padding: const EdgeInsets.all(8),
+      itemCount: subjects.length,
+      itemBuilder: (BuildContext context, int index) {
+        return GestureDetector(
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => SubjectInformation(materia : subjects[index])),
             );
-    }
-
-    void MyNewSubject() {
-        double height = MediaQuery.of(context).size.width;
-        double alturaColors = height * 0.6;
-        double circleRad = height * 0.06;
-        Color colorC = Colors.white;
-        String _name = "", _start = "07:00", _end = "07:00";
-        int _parcial = 0;
-        List<String> hrsList = ['07:00', '08:00', '09:00', '10:00', '11:00', '12:00', '13:00', 
-                                '14:00', '15:00', '16:00', '17:00', '18:00', '19:00', '20:00', 
-                                '21:00'];
-        showDialog(
-            context: context,
-            builder: (context) => AlertDialog(
-                title: const Text("Crear Materia"),
-                content: SingleChildScrollView(
-                    child: Center(
-                        child: Column(
-                            children: <Widget>[
-                                Container(
-                                    padding: const EdgeInsets.only(right: 20),
-                                    child: Column(
-                                        children: <Widget>[
-                                            TextFormField(
-                                                decoration: const InputDecoration(
-                                                    icon: Icon(Icons.chevron_right),
-                                                    labelText: 'Materia *',
-                                                ),
-                                                onChanged: (String? value) {
-                                                    _name = value!;
-                                                }
-                                            ),
-                                            TextFormField(
-                                                decoration: const InputDecoration(
-                                                    icon: Icon(Icons.chevron_right),
-                                                    labelText: 'No Parciales *',
-                                                ),
-                                                onChanged: (String? value) {
-                                                    _parcial = int.parse(value!);
-                                                }
-                                            ),
-                                            Container(
-                                              padding: const EdgeInsets.only(top: 15),
-                                              child: Row(
-                                                children: const [
-                                                  Text(
-                                                    'Hora de inicio: ', 
-                                                    style: TextStyle(
-                                                      fontSize: 15,
-                                                      color: Color.fromARGB(255, 90, 90, 90),
-                                                      ),
-                                                  ),
-                                                ],
-                                              ),
-                                            ),
-                                            Row(
-                                              children: <Widget>[
-                                                const Icon(Icons.access_time),
-                                                Expanded(
-                                                  child: Container(
-                                                    padding: const EdgeInsets.only(left: 15),                                            
-                                                    child: DropdownButtonFormField<String>(
-                                                      value: _start,
-                                                      items: hrsList.map((String value){
-                                                        return DropdownMenuItem<String>(
-                                                          value: value,
-                                                          child: Text(value),
-                                                        );
-                                                      }).toList(),
-                                                      onChanged: (String? value) {
-                                                        setState(() => _start = value!);
-                                                      },
-                                                      onSaved: (String? value) {
-                                                        setState(() =>_start = value!);
-                                                      }
-                                                    ),
-                                                  ),
-                                                ),
-                                              ]
-                                            ),
-                                            Container(
-                                              padding: const EdgeInsets.only(top: 15),
-                                              child: Row(
-                                                children: const [
-                                                  Text(
-                                                    'Hora de fin: ', 
-                                                    style: TextStyle(
-                                                      fontSize: 15,
-                                                      color: Color.fromARGB(255, 90, 90, 90),
-                                                    )
-                                                  ),
-                                                ],
-                                              ),
-                                            ),
-                                            Row(
-                                              children: <Widget>[
-                                                const Icon(Icons.access_time),
-                                                Expanded(
-                                                  child: Container(
-                                                    padding: const EdgeInsets.only(left: 15),                                            
-                                                    child: DropdownButtonFormField<String>(
-                                                      value: _end,
-                                                      items: hrsList.map((String value){
-                                                        return DropdownMenuItem<String>(
-                                                          value: value,
-                                                          child: Text(value),
-                                                        );
-                                                      }).toList(),
-                                                      onChanged: (String? value) {
-                                                        setState(() => _end = value!);
-                                                      },
-                                                      onSaved: (String? value) {
-                                                        setState(() =>_end = value!);
-                                                      }
-                                                    ),
-                                                  ),
-                                                ),
-                                              ]
-                                            ),
-                                        ],
-                                    ),
-                                ),
-                                Container(
-                                    margin: const EdgeInsets.only(top: 20),
-                                    height: alturaColors,
-                                        child: Row(
-                                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                                            children: <Widget>[
-                                                Column(
-                                                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                                                    children:  <Widget>[
-                                                        CircleAvatar(
-                                                            backgroundColor: Colors.tealAccent[100],
-                                                            radius: circleRad, //Text
-                                                            child: InkWell(
-                                                                onTap: () {
-                                                                    colorC = Colors.tealAccent[100]!;
-                                                                }
-                                                            ),
-                                                        ),
-                                                        CircleAvatar(
-                                                            backgroundColor: Colors.tealAccent[700],
-                                                            radius: circleRad, //Text
-                                                            child: InkWell(
-                                                                onTap: () {
-                                                                    colorC = Colors.tealAccent[700]!;
-                                                                }
-                                                            ),
-                                                        ), 
-                                                        CircleAvatar(
-                                                            backgroundColor: Colors.pink[50],
-                                                            radius: circleRad, //Text
-                                                            child: InkWell(
-                                                                onTap: () {
-                                                                    colorC = Colors.pink[50]!;
-                                                                }
-                                                            ),
-                                                        ),
-                                                        CircleAvatar(
-                                                            backgroundColor: Colors.pink[300],
-                                                            radius: circleRad, //Text
-                                                            child: InkWell(
-                                                                onTap: () {
-                                                                    colorC = Colors.pink[300]!;
-                                                                }
-                                                            ),
-                                                        ),
-                                                    ],
-                                                ),
-                                                Column(
-                                                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                                                    children: <Widget>[
-                                                        CircleAvatar(
-                                                            backgroundColor: Colors.amber[300],
-                                                            radius: circleRad, //Text
-                                                            child: InkWell(
-                                                                onTap: () {
-                                                                    colorC = Colors.amber[300]!;
-                                                                }
-                                                            ),
-                                                        ),
-                                                        CircleAvatar(
-                                                            backgroundColor: Colors.amber[700],
-                                                            radius: circleRad, //Text
-                                                            child: InkWell(
-                                                                onTap: () {
-                                                                    colorC = Colors.amber[700]!;
-                                                                }
-                                                            ),
-                                                        ),
-                                                        CircleAvatar(
-                                                            backgroundColor: Colors.blueGrey[100],
-                                                            radius: circleRad, //Text
-                                                            child: InkWell(
-                                                                onTap: () {
-                                                                    colorC = Colors.blueGrey[100]!;
-                                                                }
-                                                            ),
-                                                        ),
-                                                        CircleAvatar(   
-                                                            backgroundColor: Colors.blueGrey,
-                                                            radius: circleRad, //Text
-                                                            child: InkWell(
-                                                                onTap: () {
-                                                                    colorC = Colors.blueGrey;
-                                                                }
-                                                            ),
-                                                        ),
-                                                    ],
-                                                ),
-                                                Column(
-                                                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                                                    children: <Widget>[
-                                                    CircleAvatar(
-                                                        backgroundColor: Colors.lime[300],
-                                                        radius: circleRad, //Text
-                                                            child: InkWell(
-                                                            onTap: () {
-                                                                colorC = Colors.lime[300]!;
-                                                            }
-                                                        ),
-                                                    ),
-                                                    CircleAvatar(
-                                                        backgroundColor: Colors.lime[700],
-                                                        radius: circleRad, //Text
-                                                        child: InkWell(
-                                                            onTap: () {
-                                                                colorC = Colors.lime[700]!;
-                                                            }
-                                                        ),
-                                                    ),
-                                                    CircleAvatar(
-                                                        backgroundColor: Colors.brown[100],
-                                                        radius: circleRad, //Text
-                                                        child: InkWell(
-                                                            onTap: () {
-                                                                colorC = Colors.brown[100]!;
-                                                            }
-                                                        ),
-                                                    ),
-                                                    CircleAvatar(
-                                                        backgroundColor: Colors.brown[400],
-                                                        radius: circleRad, //Text
-                                                        child: InkWell(
-                                                            onTap: () {
-                                                                colorC = Colors.brown[400]!;
-                                                            }
-                                                        ),
-                                                    ),
-                                                ],
-                                            ),
-                                        ],
-                                    ),
-                                ),
-                            ],
-                        ),
-                    ),
-                ),
-                actions: <Widget>[
-                    TextButton(
-                        onPressed: () => Navigator.pop(context, 'Cancelar'),
-                        child: const Text('Cancelar'),
-                    ),
-                    TextButton(
-                        onPressed: () {
-                          if(_name.isNotEmpty && _start.isNotEmpty && _end.isNotEmpty) {
-                            final s = SubjectInfo(_name, _parcial, _start, _end, colorC);
-                            s.setRating(1, 7.8);
-                            db.collection("Asignaturas").doc(s.id).set(s.createDataforDatabase());
-                            setState(() => subjects.add(s));
-                          }
-                          Navigator.pop(context, 'Guardar');
-                        },
-                        child: const Text('Guardar'),
-                    ),
-                ],
+          },
+          child: SizedBox(
+            height: 50,
+            child: Card(
+              elevation: 6,
+              color: subjects[index].color,
+              child: Center(child: Text(subjects[index].name)),
             ),
+          ),
         );
-    }
+      },
+      separatorBuilder: (context, index) => const Divider(
+        color: Colors.white,
+      ),
+    );
+  }
 
-    void NewProfessor() {
+  void MyNewSubject() {
     double height = MediaQuery.of(context).size.width;
     double alturaColors = height * 0.6;
     double circleRad = height * 0.06;
-    Color colorC = Colors.white;
+    Color colorC;
+    colorC = Colors.blueGrey[100]!;
+    String _name = "", _start = "07:00", _end = "07:00";
+    int _parcial = 0;
+    List<String> hrsList = ['07:00', '08:00', '09:00', '10:00', '11:00', '12:00', '13:00',
+      '14:00', '15:00', '16:00', '17:00', '18:00', '19:00', '20:00',
+      '21:00'];
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Crear Materia"),
+        content: SingleChildScrollView(
+          child: Center(
+            child: Column(
+              children: <Widget>[
+                Container(
+                  padding: const EdgeInsets.only(right: 20),
+                  child: Column(
+                    children: <Widget>[
+                      TextFormField(
+                          decoration: const InputDecoration(
+                            icon: Icon(Icons.chevron_right),
+                            labelText: 'Materia *',
+                          ),
+                          onChanged: (String? value) {
+                            _name = value!;
+                          }
+                      ),
+                      TextFormField(
+                          decoration: const InputDecoration(
+                            icon: Icon(Icons.chevron_right),
+                            labelText: 'No Parciales *',
+                          ),
+                          onChanged: (String? value) {
+                            _parcial = int.parse(value!);
+                          }
+                      ),
+                      Container(
+                        padding: const EdgeInsets.only(top: 15),
+                        child: Row(
+                          children: const [
+                            Text(
+                              'Hora de inicio: ',
+                              style: TextStyle(
+                                fontSize: 15,
+                                color: Color.fromARGB(255, 90, 90, 90),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Row(
+                          children: <Widget>[
+                            const Icon(Icons.access_time),
+                            Expanded(
+                              child: Container(
+                                padding: const EdgeInsets.only(left: 15),
+                                child: DropdownButtonFormField<String>(
+                                    value: _start,
+                                    items: hrsList.map((String value){
+                                      return DropdownMenuItem<String>(
+                                        value: value,
+                                        child: Text(value),
+                                      );
+                                    }).toList(),
+                                    onChanged: (String? value) {
+                                      setState(() => _start = value!);
+                                    },
+                                    onSaved: (String? value) {
+                                      setState(() =>_start = value!);
+                                    }
+                                ),
+                              ),
+                            ),
+                          ]
+                      ),
+                      Container(
+                        padding: const EdgeInsets.only(top: 15),
+                        child: Row(
+                          children: const [
+                            Text(
+                                'Hora de fin: ',
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  color: Color.fromARGB(255, 90, 90, 90),
+                                )
+                            ),
+                          ],
+                        ),
+                      ),
+                      Row(
+                          children: <Widget>[
+                            const Icon(Icons.access_time),
+                            Expanded(
+                              child: Container(
+                                padding: const EdgeInsets.only(left: 15),
+                                child: DropdownButtonFormField<String>(
+                                    value: _end,
+                                    items: hrsList.map((String value){
+                                      return DropdownMenuItem<String>(
+                                        value: value,
+                                        child: Text(value),
+                                      );
+                                    }).toList(),
+                                    onChanged: (String? value) {
+                                      setState(() => _end = value!);
+                                    },
+                                    onSaved: (String? value) {
+                                      setState(() =>_end = value!);
+                                    }
+                                ),
+                              ),
+                            ),
+                          ]
+                      ),
+                    ],
+                  ),
+                ),
+                Container(
+                  margin: const EdgeInsets.only(top: 20),
+                  height: alturaColors,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: <Widget>[
+                      Column(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children:  <Widget>[
+                          CircleAvatar(
+                            backgroundColor: Colors.tealAccent[100],
+                            radius: circleRad, //Text
+                            child: InkWell(
+                                onTap: () {
+                                  colorC = Colors.tealAccent[100]!;
+                                }
+                            ),
+                          ),
+                          CircleAvatar(
+                            backgroundColor: Colors.tealAccent[700],
+                            radius: circleRad, //Text
+                            child: InkWell(
+                                onTap: () {
+                                  colorC = Colors.tealAccent[700]!;
+                                }
+                            ),
+                          ),
+                          CircleAvatar(
+                            backgroundColor: Colors.pink[50],
+                            radius: circleRad, //Text
+                            child: InkWell(
+                                onTap: () {
+                                  colorC = Colors.pink[50]!;
+                                }
+                            ),
+                          ),
+                          CircleAvatar(
+                            backgroundColor: Colors.pink[300],
+                            radius: circleRad, //Text
+                            child: InkWell(
+                                onTap: () {
+                                  colorC = Colors.pink[300]!;
+                                }
+                            ),
+                          ),
+                        ],
+                      ),
+                      Column(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: <Widget>[
+                          CircleAvatar(
+                            backgroundColor: Colors.amber[300],
+                            radius: circleRad, //Text
+                            child: InkWell(
+                                onTap: () {
+                                  colorC = Colors.amber[300]!;
+                                }
+                            ),
+                          ),
+                          CircleAvatar(
+                            backgroundColor: Colors.amber[700],
+                            radius: circleRad, //Text
+                            child: InkWell(
+                                onTap: () {
+                                  colorC = Colors.amber[700]!;
+                                }
+                            ),
+                          ),
+                          CircleAvatar(
+                            backgroundColor: Colors.blueGrey[100],
+                            radius: circleRad, //Text
+                            child: InkWell(
+                                onTap: () {
+                                  colorC = Colors.blueGrey[100]!;
+                                }
+                            ),
+                          ),
+                          CircleAvatar(
+                            backgroundColor: Colors.blueGrey,
+                            radius: circleRad, //Text
+                            child: InkWell(
+                                onTap: () {
+                                  colorC = Colors.blueGrey;
+                                }
+                            ),
+                          ),
+                        ],
+                      ),
+                      Column(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: <Widget>[
+                          CircleAvatar(
+                            backgroundColor: Colors.lime[300],
+                            radius: circleRad, //Text
+                            child: InkWell(
+                                onTap: () {
+                                  colorC = Colors.lime[300]!;
+                                }
+                            ),
+                          ),
+                          CircleAvatar(
+                            backgroundColor: Colors.lime[700],
+                            radius: circleRad, //Text
+                            child: InkWell(
+                                onTap: () {
+                                  colorC = Colors.lime[700]!;
+                                }
+                            ),
+                          ),
+                          CircleAvatar(
+                            backgroundColor: Colors.brown[100],
+                            radius: circleRad, //Text
+                            child: InkWell(
+                                onTap: () {
+                                  colorC = Colors.brown[100]!;
+                                }
+                            ),
+                          ),
+                          CircleAvatar(
+                            backgroundColor: Colors.brown[400],
+                            radius: circleRad, //Text
+                            child: InkWell(
+                                onTap: () {
+                                  colorC = Colors.brown[400]!;
+                                }
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        actions: <Widget>[
+          TextButton(
+            onPressed: () => Navigator.pop(context, 'Cancelar'),
+            child: const Text('Cancelar'),
+          ),
+          TextButton(
+            onPressed: () {
+              if(_name.isNotEmpty && _start.isNotEmpty && _end.isNotEmpty) {
+                final s = SubjectInfo(_name, _parcial, _start, _end, colorC);
+                db.collection("Asignaturas").doc(s.id).set(s.toJson());
+                setState(() => subjects.add(s));
+                bubbleSort();
+              }
+              Navigator.pop(context, 'Guardar');
+            },
+            child: const Text('Guardar'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void bubbleSort(){
+      int i, j;
+      for(i = 0; i < subjects.length -1; i++){
+          for(j = 0; j < (subjects.length -i -1); j++){
+              var cad1 = subjects[j].start.substring(1,3);
+              var cad2 = subjects[j+1].start.substring(1,3);
+              int hr1 = int.parse(cad1);
+              int hr2 = int.parse(cad2);
+
+              if(hr1 > hr2){
+                  final temp = SubjectInfo(subjects[j].name, subjects[j].parciales, subjects[j].start, subjects[j].end, subjects[j].color);
+                  subjects[j] = subjects[j + 1];
+                  subjects[j + 1] = temp;
+              }
+          }
+      }
+  }
+
+  void NewProfessor() {
+    double height = MediaQuery.of(context).size.width;
+    double alturaColors = height * 0.6;
+    double circleRad = height * 0.06;
+    Color colorC;
+    colorC = Colors.blueGrey[100]!;
     String _name = "", _email = "", _mate = "";
     showDialog(
       context: context,
@@ -770,13 +858,13 @@ class _MyHomePageState extends State<MyHomePage> {
             onPressed: (() {
               if (_name != "" && _email != "" && _mate != "") {
                 final p = ProfesorInfo(_name, _email, _mate, colorC);
-                db.collection("Profesores").doc(p.id).set(p.createDataforDatabase());
+                db.collection("Profesores").doc(p.id).set(p.toJson());
                 setState(() => teachers.add(p));
               }
               Navigator.pop(context, 'Guardar');
             }),
-              child: const Text('Guardar'),
-            ),
+            child: const Text('Guardar'),
+          ),
         ],
       ),
     );
@@ -785,60 +873,60 @@ class _MyHomePageState extends State<MyHomePage> {
   Widget ProfesorPage() {
     return Scaffold(
       body: ListView.builder(
-        itemCount: teachers.length,
-        itemBuilder: (BuildContext context, int index) {
-          return Card(
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-            color: teachers[index].color,
-            margin: const EdgeInsets.only(top: 10, bottom: 10, right: 30, left: 30),
-            elevation: 10,
-            child: Column(
-            children: <Widget>[
-              ListTile(
-                contentPadding: const EdgeInsets.fromLTRB(25, 15, 25, 0),
-                  title: Text(
-                    teachers[index].name,
-                    style: const TextStyle(fontSize: 30)
+          itemCount: teachers.length,
+          itemBuilder: (BuildContext context, int index) {
+            return Card(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              color: teachers[index].color,
+              margin: const EdgeInsets.only(top: 10, bottom: 10, right: 30, left: 30),
+              elevation: 10,
+              child: Column(
+                children: <Widget>[
+                  ListTile(
+                    contentPadding: const EdgeInsets.fromLTRB(25, 15, 25, 0),
+                    title: Text(
+                        teachers[index].name,
+                        style: const TextStyle(fontSize: 30)
+                    ),
+                    subtitle: Container(
+                      padding: const EdgeInsets.only(top: 10),
+                      child: Column(
+                        children: <Widget>[
+                          Row(
+                            children: <Widget>[
+                              Text(teachers[index].mate,
+                                  style: const TextStyle(height:1.5, fontSize: 15)
+                              ),
+                            ],
+                          ),
+                          Row(
+                            children: <Widget>[
+                              Text(teachers[index].email,
+                                  style: const TextStyle(height:1.5, fontSize: 15)
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
-                  subtitle: Container(
-                    padding: const EdgeInsets.only(top: 10),
-                    child: Column(
-                      children: <Widget>[ 
-                        Row(
-                          children: <Widget>[
-                            Text(teachers[index].mate,
-                              style: const TextStyle(height:1.5, fontSize: 15)
-                            ),
-                          ],
-                        ),
-                        Row(
-                          children: <Widget>[
-                            Text(teachers[index].email,
-                              style: const TextStyle(height:1.5, fontSize: 15)
-                            ),
-                          ],
-                        ),
+                  Container(
+                    margin: const EdgeInsets.only(right: 20, bottom: 10),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: <Widget>[
+                        TextButton(onPressed: () => {
+                          setState(() {
+                            teachers.removeAt(index);
+                          }),
+                        }, child: const Text('Eliminar')),
                       ],
                     ),
                   ),
-                ),
-                Container(
-                  margin: const EdgeInsets.only(right: 20, bottom: 10),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: <Widget>[
-                      TextButton(onPressed: () => {
-                        setState(() {
-                          teachers.removeAt(index);
-                        }),
-                      }, child: const Text('Eliminar')),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          );
-        }
+                ],
+              ),
+            );
+          }
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => NewProfessor(),
@@ -908,7 +996,7 @@ class _MyHomePageState extends State<MyHomePage> {
     double height = MediaQuery.of(context).size.width;
     double alturaColors = height *.2;
     double circleRad = height * 0.06;
-    Color colorC = Colors.white;
+    Color colorC = Colors.green;
     String _name = "", _mate = "", _dia = "", _mes = "", _anio = "";
     showDialog(
       context: context,
@@ -976,33 +1064,33 @@ class _MyHomePageState extends State<MyHomePage> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: <Widget>[
-                          CircleAvatar(
-                            backgroundColor: Colors.red,
-                            radius: circleRad, //Text
-                            child: InkWell(
-                                onTap: () {
-                                  colorC = Colors.red;
-                                }
-                            ),
-                          ),
-                          CircleAvatar(
-                            backgroundColor: Colors.yellow,
-                            radius: circleRad, //Text
-                            child: InkWell(
-                                onTap: () {
-                                  colorC = Colors.yellow;
-                                }
-                            ),
-                          ),
-                          CircleAvatar(
-                            backgroundColor: Colors.green,
-                            radius: circleRad, //Text
-                            child: InkWell(
-                                onTap: () {
-                                  colorC = Colors.green;
-                                }
-                            ),
-                          ),
+                      CircleAvatar(
+                        backgroundColor: Colors.red,
+                        radius: circleRad, //Text
+                        child: InkWell(
+                            onTap: () {
+                              colorC = Colors.red;
+                            }
+                        ),
+                      ),
+                      CircleAvatar(
+                        backgroundColor: Colors.yellow,
+                        radius: circleRad, //Text
+                        child: InkWell(
+                            onTap: () {
+                              colorC = Colors.yellow;
+                            }
+                        ),
+                      ),
+                      CircleAvatar(
+                        backgroundColor: Colors.green,
+                        radius: circleRad, //Text
+                        child: InkWell(
+                            onTap: () {
+                              colorC = Colors.green;
+                            }
+                        ),
+                      ),
 
                     ],
                   ),
@@ -1020,7 +1108,7 @@ class _MyHomePageState extends State<MyHomePage> {
             onPressed: (() {
               if(_name != "" && _mate != "" && _dia != "" && _mes != "" && _anio != ""){
                 final e = EventInfo(_name, _mate, _dia, _mes, _anio, colorC);
-                db.collection("Eventos").doc(e.id).set(e.createDataforDatabase());
+                db.collection("Eventos").doc(e.id).set(e.toJson());
                 setState(() => events.add(e));
                 colorSort();
               }
@@ -1050,7 +1138,7 @@ class _MyHomePageState extends State<MyHomePage> {
 }
 
 class SubjectInformation extends StatefulWidget {
-   const SubjectInformation({Key? key, required this.materia}) : super(key: key);
+  const SubjectInformation({Key? key, required this.materia}) : super(key: key);
 
   final SubjectInfo materia;
 
@@ -1060,84 +1148,101 @@ class SubjectInformation extends StatefulWidget {
 }
 
 class _SubjectInformation extends State<SubjectInformation> {
-    final myController = TextEditingController();
-    String _dropdownValue = "Parcial 1";
 
-    @override
-    Widget build(BuildContext context) {
+  String _dropdownValue = "Parcial 1";
+  List<double> grades = [];
+  int gradesAvailable = 0;
+  double newGrade = 0;
+  final db  = FirebaseFirestore.instance;
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
         appBar: AppBar(
-            title: Text(widget.materia.name),
+          title: Text(widget.materia.name),
         ),
         body: Center(
-            child: ListView(
-                children: <Widget>[
-                    getCalificaciones(widget.materia.parciales),
-                    Container(
-                        height: 50,
-                        child: ListView(
-                            padding: const EdgeInsets.all(8),
-                            children: [
-                                ListTile(
-                                    title: Text('Ordinario: 8.0'),
-                                ),
-                            ]
-                        )
-                    )
-                ],
-            ),
+          child: ListView(
+            children: <Widget>[
+              getCalificaciones(widget.materia.parciales),
+              Container(
+                  height: 50,
+                  child: ListView(
+                      padding: const EdgeInsets.all(8),
+                      children: [
+                        ListTile(
+                          title: Text('Ordinario: ${getProm() != -1 ? getProm().toStringAsFixed(1) :  ""}'),
+                        ),
+                      ]
+                  )
+              )
+            ],
+          ),
         ),
         floatingActionButton: FloatingActionButton(
-            onPressed: () {
-                showDialog(
-                    context: context,
-                    builder: (context) {
-                        return AlertDialog(
-                            title: const Text("Guardar calificación"),
-                            content: SingleChildScrollView(
-                                child: ListBody(
-                                    children: <Widget>[
-                                        DropdownButtonFormField<String>(
-                                            value: _dropdownValue,
-                                            items: getParciales(widget.materia.parciales).map((String value) {
-                                                return DropdownMenuItem<String>(
-                                                    child: Text(value),
-                                                    value: value,
-                                                );
-                                            }).toList(),
-                                            onChanged: (String? newValue) {
-                                                setState(()  => _dropdownValue = newValue!);
-                                            },
-                                            onSaved: (String? newValue) {
-                                                setState(()  => _dropdownValue = newValue!);
-                                            },
-                                        ),
-                                        TextField(
-                                            controller: myController,
-                                        ),
-                                    ],
-                                ),
-                            ),
-                            actions: <Widget>[
-                                TextButton(
-                                    onPressed: () => Navigator.pop(context, 'Cancelar'),
-                                    child: const Text('Cancelar'),
-                                ),
-                                TextButton(
-                                    onPressed: () => Navigator.pop(context, 'Guardar'),
-                                    child: const Text('Guardar'),
-                                ),
-                            ],
-                        );
-                    }
-                );
-            },
-            child: const Icon(Icons.add),
+          onPressed: () {
+            showDialog(
+                context: context,
+                builder: (context) {
+                  return AlertDialog(
+                    title: const Text("Guardar calificación"),
+                    content: SingleChildScrollView(
+                      child: ListBody(
+                        children: <Widget>[
+                          DropdownButtonFormField<String>(
+                            value: _dropdownValue,
+                            items: getParciales(gradesAvailable).map((String value) {
+                              return DropdownMenuItem<String>(
+                                child: Text(value),
+                                value: value,
+                              );
+                            }).toList(),
+                            onChanged: (String? newValue) {
+                              setState(()  => _dropdownValue = newValue!);
+                            },
+                            onSaved: (String? newValue) {
+                              setState(()  => _dropdownValue = newValue!);
+                            },
+                          ),
+                          TextFormField(
+                              onChanged: (String? value) {
+                                newGrade = double.parse(value!);
+                              }
+                          ),
+                        ],
+                      ),
+                    ),
+                    actions: <Widget>[
+                      TextButton(
+                        onPressed: () => Navigator.pop(context, 'Cancelar'),
+                        child: const Text('Cancelar'),
+                      ),
+                      TextButton(
+                        onPressed: () {
+                          if(!newGrade.isNaN){
+                            setState(() {
+                              updateGrade(_dropdownValue[8],newGrade);
+                            });
+                            setState(() {
+                              widget.materia.setRating(int.parse(_dropdownValue[8]),newGrade);
+                            });
+                          }
+                          Navigator.pop(context, 'Guardar');
+                        },
+                        child: const Text('Guardar'),
+                      ),
+                    ],
+                  );
+                }
+            );
+          },
+          child: const Icon(Icons.add),
         )
     );
-    }
-  //Calificaciones
+  }
+
   Container getCalificaciones(int parciales) {
+    getListGrades(parciales);
     return Container(
       height: 55 * parciales.toDouble(),
       child: ListView.builder(
@@ -1145,7 +1250,7 @@ class _SubjectInformation extends State<SubjectInformation> {
         itemCount: parciales,
         itemBuilder: (context, index) {
           return ListTile(
-              title: Text('Parcial ${index+1}: 8.0'),
+            title: Text('Parcial ${index+1}: ${grades[index] != -1 ? grades[index] : ""}'),
           );
         },
       ),
@@ -1154,8 +1259,120 @@ class _SubjectInformation extends State<SubjectInformation> {
 
   List<String> getParciales(int parciales){
     return List.generate(
-        parciales,
-        (index) => 'Parcial ${index+1}',
+      parciales,
+          (index) => 'Parcial ${index+1}',
     );
   }
+
+  void getListGrades(int parciales){
+
+    int band = 1;
+
+    if(parciales >= 1){
+      grades.add(widget.materia.p1);
+      if(parciales == 1 || parciales != 1 && widget.materia.p1 == -1) {
+        gradesAvailable = 1;
+        band = 0;
+      }
+    }
+    if(parciales >= 2){
+      grades.add(widget.materia.p2);
+      if(band == 1 && (parciales == 2 || parciales != 2 && widget.materia.p2 == -1)) {
+        gradesAvailable = 2;
+        band = 0;
+      }
+    }
+    if(parciales >= 3){
+      grades.add(widget.materia.p3);
+      if(band == 1 && (parciales == 3 || parciales != 3 && widget.materia.p3 == -1)) {
+        gradesAvailable = 3;
+        band = 0;
+      }
+    }
+    if(parciales >= 4){
+      grades.add(widget.materia.p4);
+      if(band == 1 && (parciales == 4 || parciales != 4 && widget.materia.p4 == -1)) {
+        gradesAvailable = 4;
+        band = 0;
+      }
+    }
+    if(parciales == 5){
+      grades.add(widget.materia.p5);
+      if(band == 1){
+        gradesAvailable = 5;
+      }
+    }
+
+  }
+
+  double getProm(){
+
+    int dividor = 0;
+    double prom = 0.0;
+
+    for(double grade in grades) {
+      if(grade != -1){
+        dividor++;
+        prom += grade;
+      }
+    }
+
+    if(dividor == 0){
+      return -1;
+    }
+
+    return (prom/dividor);
+  }
+
+  void updateGrade(String parcial, double cal){
+
+    switch(parcial){
+      case '1':
+        db.collection("Asignaturas").where('id', isEqualTo: widget.materia.id).get().then((value) {
+          value.docs.forEach((doc) {
+            doc.reference.update({
+              'p1': cal,
+            });
+          });
+        });
+        break;
+      case '2':
+        db.collection("Asignaturas").where('id', isEqualTo: widget.materia.id).get().then((value) {
+          value.docs.forEach((doc) {
+            doc.reference.update({
+              'p2': cal,
+            });
+          });
+        });
+        break;
+      case '3':
+        db.collection("Asignaturas").where('id', isEqualTo: widget.materia.id).get().then((value) {
+          value.docs.forEach((doc) {
+            doc.reference.update({
+              'p3': cal,
+            });
+          });
+        });
+        break;
+      case '4':
+        db.collection("Asignaturas").where('id', isEqualTo: widget.materia.id).get().then((value) {
+          value.docs.forEach((doc) {
+            doc.reference.update({
+              'p4': cal,
+            });
+          });
+        });
+        break;
+      case '5':
+        db.collection("Asignaturas").where('id', isEqualTo: widget.materia.id).get().then((value) {
+          value.docs.forEach((doc) {
+            doc.reference.update({
+              'p5': cal,
+            });
+          });
+        });
+        break;
+    }
+  }
+
 }
