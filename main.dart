@@ -647,21 +647,21 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   void bubbleSort(){
-      int i, j;
-      for(i = 0; i < subjects.length -1; i++){
-          for(j = 0; j < (subjects.length -i -1); j++){
-              var cad1 = subjects[j].start.substring(1,3);
-              var cad2 = subjects[j+1].start.substring(1,3);
-              int hr1 = int.parse(cad1);
-              int hr2 = int.parse(cad2);
+    int i, j;
+    for(i = 0; i < subjects.length -1; i++){
+      for(j = 0; j < (subjects.length -i -1); j++){
+        var cad1 = subjects[j].start.substring(1,3);
+        var cad2 = subjects[j+1].start.substring(1,3);
+        int hr1 = int.parse(cad1);
+        int hr2 = int.parse(cad2);
 
-              if(hr1 > hr2){
-                  final temp = SubjectInfo(subjects[j].name, subjects[j].parciales, subjects[j].start, subjects[j].end, subjects[j].color);
-                  subjects[j] = subjects[j + 1];
-                  subjects[j + 1] = temp;
-              }
-          }
+        if(hr1 > hr2){
+          final temp = SubjectInfo(subjects[j].name, subjects[j].parciales, subjects[j].start, subjects[j].end, subjects[j].color);
+          subjects[j] = subjects[j + 1];
+          subjects[j + 1] = temp;
+        }
       }
+    }
   }
 
   void NewProfessor() {
@@ -1153,10 +1153,12 @@ class _SubjectInformation extends State<SubjectInformation> {
   List<double> grades = [];
   int gradesAvailable = 0;
   double newGrade = 0;
+  double prom = -1;
   final db  = FirebaseFirestore.instance;
 
   @override
   Widget build(BuildContext context) {
+    getProm();
     return Scaffold(
         appBar: AppBar(
           title: Text(widget.materia.name),
@@ -1171,7 +1173,7 @@ class _SubjectInformation extends State<SubjectInformation> {
                       padding: const EdgeInsets.all(8),
                       children: [
                         ListTile(
-                          title: Text('Ordinario: ${getProm() != -1 ? getProm().toStringAsFixed(1) :  ""}'),
+                          title: Text('Ordinario: ${prom != -1 ? prom.toStringAsFixed(1) :  ""}'),
                         ),
                       ]
                   )
@@ -1222,8 +1224,6 @@ class _SubjectInformation extends State<SubjectInformation> {
                           if(!newGrade.isNaN){
                             setState(() {
                               updateGrade(_dropdownValue[8],newGrade);
-                            });
-                            setState(() {
                               widget.materia.setRating(int.parse(_dropdownValue[8]),newGrade);
                             });
                           }
@@ -1305,29 +1305,28 @@ class _SubjectInformation extends State<SubjectInformation> {
 
   }
 
-  double getProm(){
+  void getProm(){
 
-    int dividor = 0;
-    double prom = 0.0;
+    int n = 0;
 
     for(double grade in grades) {
       if(grade != -1){
-        dividor++;
+        n++;
         prom += grade;
       }
     }
 
-    if(dividor == 0){
-      return -1;
+    if(n != 0){
+      prom /= n;
     }
 
-    return (prom/dividor);
   }
 
   void updateGrade(String parcial, double cal){
 
     switch(parcial){
       case '1':
+        grades[0] = cal;
         db.collection("Asignaturas").where('id', isEqualTo: widget.materia.id).get().then((value) {
           value.docs.forEach((doc) {
             doc.reference.update({
@@ -1337,6 +1336,7 @@ class _SubjectInformation extends State<SubjectInformation> {
         });
         break;
       case '2':
+        grades[1] = cal;
         db.collection("Asignaturas").where('id', isEqualTo: widget.materia.id).get().then((value) {
           value.docs.forEach((doc) {
             doc.reference.update({
@@ -1346,6 +1346,7 @@ class _SubjectInformation extends State<SubjectInformation> {
         });
         break;
       case '3':
+        grades[2] = cal;
         db.collection("Asignaturas").where('id', isEqualTo: widget.materia.id).get().then((value) {
           value.docs.forEach((doc) {
             doc.reference.update({
@@ -1355,6 +1356,7 @@ class _SubjectInformation extends State<SubjectInformation> {
         });
         break;
       case '4':
+        grades[3] = cal;
         db.collection("Asignaturas").where('id', isEqualTo: widget.materia.id).get().then((value) {
           value.docs.forEach((doc) {
             doc.reference.update({
@@ -1364,6 +1366,7 @@ class _SubjectInformation extends State<SubjectInformation> {
         });
         break;
       case '5':
+        grades[4] = cal;
         db.collection("Asignaturas").where('id', isEqualTo: widget.materia.id).get().then((value) {
           value.docs.forEach((doc) {
             doc.reference.update({
