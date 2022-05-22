@@ -41,6 +41,7 @@ class SubjectInfo {
     p1 = p2 = p3 = p4 = p5 = -1;
   }
 
+
   setRating(int p, double calif) {
     switch (p) {
       case 1:
@@ -245,6 +246,7 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
+  //Inicializar listas
   void InitializeList() {
     List<SubjectInfo> s = [];
     List<EventInfo> e = [];
@@ -287,6 +289,8 @@ class _MyHomePageState extends State<MyHomePage> {
     });
   }
 
+  //Parte de las materias
+  //Materias
   Widget MySubjectPage() {
     if(subjects.isEmpty || teachers.isEmpty || events.isEmpty) {
       InitializeList();
@@ -338,34 +342,7 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
-  Widget SubjectsGradesPage() {
-    return ListView.separated(
-      padding: const EdgeInsets.all(8),
-      itemCount: subjects.length,
-      itemBuilder: (BuildContext context, int index) {
-        return GestureDetector(
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => SubjectInformation(materia : subjects[index])),
-            );
-          },
-          child: SizedBox(
-            height: 50,
-            child: Card(
-              elevation: 6,
-              color: subjects[index].color,
-              child: Center(child: Text(subjects[index].name)),
-            ),
-          ),
-        );
-      },
-      separatorBuilder: (context, index) => const Divider(
-        color: Colors.white,
-      ),
-    );
-  }
-
+  //Crear materia
   void MyNewSubject() {
     double height = MediaQuery.of(context).size.width;
     double alturaColors = height * 0.6;
@@ -631,7 +608,18 @@ class _MyHomePageState extends State<MyHomePage> {
           ),
           TextButton(
             onPressed: () {
-              if(_name.isNotEmpty && _start.isNotEmpty && _end.isNotEmpty) {
+              if(_parcial < 1 || _parcial > 5){
+                final snackBar = SnackBar(
+                  content: const Text('Los parciales deben ser entre 1 y 5'),
+                  action: SnackBarAction(
+                    label: 'Entendido',
+                    onPressed: () {
+                      // Some code to undo the change.
+                    },
+                  ),
+                );
+                ScaffoldMessenger.of(context).showSnackBar(snackBar);
+              } else if(_name.isNotEmpty && _start.isNotEmpty && _end.isNotEmpty) {
                 final s = SubjectInfo(_name, _parcial, _start, _end, colorC);
                 db.collection("Asignaturas").doc(s.id).set(s.toJson());
                 setState(() => subjects.add(s));
@@ -646,24 +634,308 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
+  //Ordenar materias
   void bubbleSort(){
+
     int i, j;
+    List<SubjectInfo> s = subjects;
+
     for(i = 0; i < subjects.length -1; i++){
       for(j = 0; j < (subjects.length -i -1); j++){
-        var cad1 = subjects[j].start.substring(1,3);
-        var cad2 = subjects[j+1].start.substring(1,3);
+        String cad1 = subjects[j].start.substring(0,2);
+        String cad2 = subjects[j+1].start.substring(0,2);
         int hr1 = int.parse(cad1);
         int hr2 = int.parse(cad2);
 
         if(hr1 > hr2){
-          final temp = SubjectInfo(subjects[j].name, subjects[j].parciales, subjects[j].start, subjects[j].end, subjects[j].color);
-          subjects[j] = subjects[j + 1];
-          subjects[j + 1] = temp;
+          SubjectInfo temp = SubjectInfo(s[j].name, s[j].parciales, s[j].start, s[j].end, s[j].color);
+          temp.setRating(1, s[j].p1);
+          temp.setRating(2, s[j].p2);
+          temp.setRating(3, s[j].p3);
+          temp.setRating(4, s[j].p4);
+          temp.setRating(5, s[j].p5);
+          s[j] = s[j + 1];
+          s[j + 1] = temp;
         }
       }
     }
+    setState(() => subjects = s);
   }
 
+  //Parte de eventos
+  //Eventos
+  Widget EventPage() {
+    return Scaffold(
+      body: ListView.builder(
+          itemCount: events.length,
+          itemBuilder: (BuildContext context, int index) {
+            return Card(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              color: events[index].color,
+              margin: const EdgeInsets.only(top: 10, bottom: 10, right: 30, left: 30),
+              elevation: 10,
+              child: Column(
+                children: <Widget>[
+                  ListTile(
+                    contentPadding: const EdgeInsets.fromLTRB(15, 10, 25, 0),
+                    title: Text(
+                        events[index].name,
+                        style: const TextStyle(fontSize: 30)
+                    ),
+                    subtitle: Align(
+                        alignment: Alignment.centerLeft,
+                        child: Column(
+                            children: <Widget>[
+                              Text(events[index].mate ,
+                                style: const TextStyle(height: 2, fontSize: 15),),
+
+                              Text(events[index].dia + "/"+ events[index].mes + "/"+ events[index].anio,
+                                style: const TextStyle(height:1.5, fontSize: 15),),
+
+                            ])
+                    ),
+                    leading: const Icon(Icons.subject),
+                  ),
+                  Container(
+                      margin: const EdgeInsets.only(right: 20, bottom: 10),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: <Widget>[
+                          TextButton(onPressed: () => {
+                            db.collection('Eventos').doc(events[index].id).delete(),
+                            setState(() {
+                              events.removeAt(index);
+                            }),
+                          }, child: const Text('Eliminar')),
+                        ],
+                      )
+                  )
+                ],
+              ),
+            );
+          }
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => NewEvent(),
+        child: const Icon(Icons.add),
+      ),
+    );
+  }
+
+  //Crear Evento
+  void NewEvent() {
+    double height = MediaQuery.of(context).size.width;
+    double alturaColors = height *.2;
+    double circleRad = height * 0.06;
+    Color colorC = Colors.green;
+    String _name = "", _mate = "", _dia = "", _mes = "", _anio = "";
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Crear Evento"),
+        content: SingleChildScrollView(
+          child: Center(
+            child: Column(
+              children: <Widget>[
+                Container(
+                  padding: const EdgeInsets.only(right: 20),
+                  child: Column(
+                    children: <Widget>[
+                      TextFormField(
+                          decoration: const InputDecoration(
+                            icon: Icon(Icons.event),
+                            labelText: 'Nombre del Evento',
+                          ),
+                          onChanged: (String? value) {
+                            _name = value.toString();
+                          }
+                      ),
+                      TextFormField(
+                          decoration: const InputDecoration(
+                            icon: Icon(Icons.book),
+                            labelText: 'Materia',
+                          ),
+                          onChanged: (String? value) {
+                            _mate = value.toString();
+                          }
+                      ),
+                      TextFormField(
+                          decoration: const InputDecoration(
+                            icon: Icon(Icons.today),
+                            labelText: 'Dia',
+                          ),
+                          onChanged: (String? value) {
+                            _dia = value.toString();
+                          }
+                      ),
+                      TextFormField(
+                          decoration: const InputDecoration(
+                            icon: Icon(Icons.today),
+                            labelText: 'Mes',
+                          ),
+                          onChanged: (String? value) {
+                            _mes = value.toString();
+                          }
+                      ),TextFormField(
+                          decoration: const InputDecoration(
+                            icon: Icon(Icons.today),
+                            labelText: 'Año',
+                          ),
+                          onChanged: (String? value) {
+                            _anio = value.toString();
+                          }
+                      ),
+
+                    ],
+                  ),
+                ),
+                Container(
+                  margin: const EdgeInsets.only(top: 20),
+                  height: alturaColors,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: <Widget>[
+                      CircleAvatar(
+                        backgroundColor: Colors.red,
+                        radius: circleRad, //Text
+                        child: InkWell(
+                            onTap: () {
+                              colorC = Colors.red;
+                            }
+                        ),
+                      ),
+                      CircleAvatar(
+                        backgroundColor: Colors.yellow,
+                        radius: circleRad, //Text
+                        child: InkWell(
+                            onTap: () {
+                              colorC = Colors.yellow;
+                            }
+                        ),
+                      ),
+                      CircleAvatar(
+                        backgroundColor: Colors.green,
+                        radius: circleRad, //Text
+                        child: InkWell(
+                            onTap: () {
+                              colorC = Colors.green;
+                            }
+                        ),
+                      ),
+
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        actions: <Widget>[
+          TextButton(
+            onPressed: () => Navigator.pop(context, 'Cancelar'),
+            child: const Text('Cancelar'),
+          ),
+          TextButton(
+            onPressed: (() {
+              if(_name != "" && _mate != "" && _dia != "" && _mes != "" && _anio != ""){
+                final e = EventInfo(_name, _mate, _dia, _mes, _anio, colorC);
+                db.collection("Eventos").doc(e.id).set(e.toJson());
+                setState(() => events.add(e));
+                colorSort();
+              }
+              Navigator.pop(context, 'Guardar');
+            }),
+            child: const Text('Guardar'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  //Ordenar evento
+  void colorSort() {
+    List<EventInfo> e = events;
+    for(int i = 0; i < events.length; i++){
+      for(int j = 0; j < (events.length - i - 1); j++){
+        if(e[j].isImportant > e[j+1].isImportant) {
+          final ev = EventInfo(e[j].name, e[j].mate, e[j].dia, e[j].mes, e[j].anio, e[j].color);
+          e[j] = e[j+1];
+          e[j+1] = ev;
+        }
+      }
+    }
+    setState(() => events = e);
+  }
+
+  //Parte de profesores
+  //Profesores
+  Widget ProfesorPage() {
+    return Scaffold(
+      body: ListView.builder(
+          itemCount: teachers.length,
+          itemBuilder: (BuildContext context, int index) {
+            return Card(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              color: teachers[index].color,
+              margin: const EdgeInsets.only(top: 10, bottom: 10, right: 30, left: 30),
+              elevation: 10,
+              child: Column(
+                children: <Widget>[
+                  ListTile(
+                    contentPadding: const EdgeInsets.fromLTRB(25, 15, 25, 0),
+                    title: Text(
+                        teachers[index].name,
+                        style: const TextStyle(fontSize: 30)
+                    ),
+                    subtitle: Container(
+                      padding: const EdgeInsets.only(top: 10),
+                      child: Column(
+                        children: <Widget>[
+                          Row(
+                            children: <Widget>[
+                              Text(teachers[index].mate,
+                                  style: const TextStyle(height:1.5, fontSize: 15)
+                              ),
+                            ],
+                          ),
+                          Row(
+                            children: <Widget>[
+                              Text(teachers[index].email,
+                                  style: const TextStyle(height:1.5, fontSize: 15)
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  Container(
+                    margin: const EdgeInsets.only(right: 20, bottom: 10),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: <Widget>[
+                        TextButton(onPressed: () => {
+                          db.collection('Profesores').doc(teachers[index].id).delete(),
+                          setState(() {
+                            teachers.removeAt(index);
+                          }),
+                        }, child: const Text('Eliminar')),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => NewProfessor(),
+        child: const Icon(Icons.add),
+      ),
+    );
+  }
+
+  //Agregar profesor
   void NewProfessor() {
     double height = MediaQuery.of(context).size.width;
     double alturaColors = height * 0.6;
@@ -870,273 +1142,39 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
-  Widget ProfesorPage() {
-    return Scaffold(
-      body: ListView.builder(
-          itemCount: teachers.length,
-          itemBuilder: (BuildContext context, int index) {
-            return Card(
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-              color: teachers[index].color,
-              margin: const EdgeInsets.only(top: 10, bottom: 10, right: 30, left: 30),
-              elevation: 10,
-              child: Column(
-                children: <Widget>[
-                  ListTile(
-                    contentPadding: const EdgeInsets.fromLTRB(25, 15, 25, 0),
-                    title: Text(
-                        teachers[index].name,
-                        style: const TextStyle(fontSize: 30)
-                    ),
-                    subtitle: Container(
-                      padding: const EdgeInsets.only(top: 10),
-                      child: Column(
-                        children: <Widget>[
-                          Row(
-                            children: <Widget>[
-                              Text(teachers[index].mate,
-                                  style: const TextStyle(height:1.5, fontSize: 15)
-                              ),
-                            ],
-                          ),
-                          Row(
-                            children: <Widget>[
-                              Text(teachers[index].email,
-                                  style: const TextStyle(height:1.5, fontSize: 15)
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  Container(
-                    margin: const EdgeInsets.only(right: 20, bottom: 10),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: <Widget>[
-                        TextButton(onPressed: () => {
-                          setState(() {
-                            teachers.removeAt(index);
-                          }),
-                        }, child: const Text('Eliminar')),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
+  //Parte de calificaciones
+  //Calificaciones
+  Widget SubjectsGradesPage() {
+    return ListView.separated(
+      padding: const EdgeInsets.all(8),
+      itemCount: subjects.length,
+      itemBuilder: (BuildContext context, int index) {
+        return GestureDetector(
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => SubjectInformation(materia : subjects[index])),
             );
-          }
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => NewProfessor(),
-        child: const Icon(Icons.add),
-      ),
-    );
-  }
-
-  Widget EventPage() {
-    return Scaffold(
-      body: ListView.builder(
-          itemCount: events.length,
-          itemBuilder: (BuildContext context, int index) {
-            return Card(
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-              color: events[index].color,
-              margin: const EdgeInsets.only(top: 10, bottom: 10, right: 30, left: 30),
-              elevation: 10,
-              child: Column(
-                children: <Widget>[
-                  ListTile(
-                    contentPadding: const EdgeInsets.fromLTRB(15, 10, 25, 0),
-                    title: Text(
-                        events[index].name,
-                        style: const TextStyle(fontSize: 30)
-                    ),
-                    subtitle: Align(
-                        alignment: Alignment.centerLeft,
-                        child: Column(
-                            children: <Widget>[
-                              Text(events[index].mate ,
-                                style: const TextStyle(height: 2, fontSize: 15),),
-
-                              Text(events[index].dia + "/"+ events[index].mes + "/"+ events[index].anio,
-                                style: const TextStyle(height:1.5, fontSize: 15),),
-
-                            ])
-                    ),
-                    leading: const Icon(Icons.subject),
-                  ),
-                  Container(
-                      margin: const EdgeInsets.only(right: 20, bottom: 10),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        children: <Widget>[
-                          TextButton(onPressed: () => {
-                            setState(() {
-                              events.removeAt(index);
-                            }),
-                          }, child: const Text('Eliminar')),
-                        ],
-                      )
-                  )
-                ],
-              ),
-            );
-          }
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => NewEvent(),
-        child: const Icon(Icons.add),
-      ),
-    );
-  }
-
-  void NewEvent() {
-    double height = MediaQuery.of(context).size.width;
-    double alturaColors = height *.2;
-    double circleRad = height * 0.06;
-    Color colorC = Colors.green;
-    String _name = "", _mate = "", _dia = "", _mes = "", _anio = "";
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text("Crear Evento"),
-        content: SingleChildScrollView(
-          child: Center(
-            child: Column(
-              children: <Widget>[
-                Container(
-                  padding: const EdgeInsets.only(right: 20),
-                  child: Column(
-                    children: <Widget>[
-                      TextFormField(
-                          decoration: const InputDecoration(
-                            icon: Icon(Icons.event),
-                            labelText: 'Nombre del Evento',
-                          ),
-                          onChanged: (String? value) {
-                            _name = value.toString();
-                          }
-                      ),
-                      TextFormField(
-                          decoration: const InputDecoration(
-                            icon: Icon(Icons.book),
-                            labelText: 'Materia',
-                          ),
-                          onChanged: (String? value) {
-                            _mate = value.toString();
-                          }
-                      ),
-                      TextFormField(
-                          decoration: const InputDecoration(
-                            icon: Icon(Icons.today),
-                            labelText: 'Dia',
-                          ),
-                          onChanged: (String? value) {
-                            _dia = value.toString();
-                          }
-                      ),
-                      TextFormField(
-                          decoration: const InputDecoration(
-                            icon: Icon(Icons.today),
-                            labelText: 'Mes',
-                          ),
-                          onChanged: (String? value) {
-                            _mes = value.toString();
-                          }
-                      ),TextFormField(
-                          decoration: const InputDecoration(
-                            icon: Icon(Icons.today),
-                            labelText: 'Año',
-                          ),
-                          onChanged: (String? value) {
-                            _anio = value.toString();
-                          }
-                      ),
-
-                    ],
-                  ),
-                ),
-                Container(
-                  margin: const EdgeInsets.only(top: 20),
-                  height: alturaColors,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: <Widget>[
-                      CircleAvatar(
-                        backgroundColor: Colors.red,
-                        radius: circleRad, //Text
-                        child: InkWell(
-                            onTap: () {
-                              colorC = Colors.red;
-                            }
-                        ),
-                      ),
-                      CircleAvatar(
-                        backgroundColor: Colors.yellow,
-                        radius: circleRad, //Text
-                        child: InkWell(
-                            onTap: () {
-                              colorC = Colors.yellow;
-                            }
-                        ),
-                      ),
-                      CircleAvatar(
-                        backgroundColor: Colors.green,
-                        radius: circleRad, //Text
-                        child: InkWell(
-                            onTap: () {
-                              colorC = Colors.green;
-                            }
-                        ),
-                      ),
-
-                    ],
-                  ),
-                ),
-              ],
+          },
+          child: SizedBox(
+            height: 50,
+            child: Card(
+              elevation: 6,
+              color: subjects[index].color,
+              child: Center(child: Text(subjects[index].name)),
             ),
           ),
-        ),
-        actions: <Widget>[
-          TextButton(
-            onPressed: () => Navigator.pop(context, 'Cancelar'),
-            child: const Text('Cancelar'),
-          ),
-          TextButton(
-            onPressed: (() {
-              if(_name != "" && _mate != "" && _dia != "" && _mes != "" && _anio != ""){
-                final e = EventInfo(_name, _mate, _dia, _mes, _anio, colorC);
-                db.collection("Eventos").doc(e.id).set(e.toJson());
-                setState(() => events.add(e));
-                colorSort();
-              }
-              Navigator.pop(context, 'Guardar');
-            }),
-            child: const Text('Guardar'),
-          ),
-        ],
+        );
+      },
+      separatorBuilder: (context, index) => const Divider(
+        color: Colors.white,
       ),
     );
-  }
-
-  void colorSort() {
-    List<EventInfo> e = events;
-    for(int i = 0; i < events.length; i++){
-      for(int j = 0; j < (events.length - i - 1); j++){
-        if(e[j].isImportant > e[j+1].isImportant) {
-          final ev = EventInfo(e[j].name, e[j].mate, e[j].dia, e[j].mes, e[j].anio, e[j].color);
-          e[j] = e[j+1];
-          e[j+1] = ev;
-        }
-      }
-    }
-    setState(() => events = e);
   }
 
 }
 
+//Informacion de materia
 class SubjectInformation extends StatefulWidget {
   const SubjectInformation({Key? key, required this.materia}) : super(key: key);
 
@@ -1153,12 +1191,11 @@ class _SubjectInformation extends State<SubjectInformation> {
   List<double> grades = [];
   int gradesAvailable = 0;
   double newGrade = 0;
-  double prom = -1;
+  double prom = -1.0;
   final db  = FirebaseFirestore.instance;
 
   @override
   Widget build(BuildContext context) {
-    getProm();
     return Scaffold(
         appBar: AppBar(
           title: Text(widget.materia.name),
@@ -1173,7 +1210,7 @@ class _SubjectInformation extends State<SubjectInformation> {
                       padding: const EdgeInsets.all(8),
                       children: [
                         ListTile(
-                          title: Text('Ordinario: ${prom != -1 ? prom.toStringAsFixed(1) :  ""}'),
+                          title: Text('Ordinario: ${prom != -1.0 ? prom.toStringAsFixed(1) :  ""}'),
                         ),
                       ]
                   )
@@ -1241,7 +1278,7 @@ class _SubjectInformation extends State<SubjectInformation> {
     );
   }
 
-  Container getCalificaciones(int parciales) {
+  Widget getCalificaciones(int parciales) {
     getListGrades(parciales);
     return Container(
       height: 55 * parciales.toDouble(),
@@ -1250,7 +1287,7 @@ class _SubjectInformation extends State<SubjectInformation> {
         itemCount: parciales,
         itemBuilder: (context, index) {
           return ListTile(
-            title: Text('Parcial ${index+1}: ${grades[index] != -1 ? grades[index] : ""}'),
+            title: Text('Parcial ${index+1}: ${grades[index] != -1.0 ? grades[index] : ""}'),
           );
         },
       ),
@@ -1303,14 +1340,17 @@ class _SubjectInformation extends State<SubjectInformation> {
       }
     }
 
+    getProm();
+
   }
 
   void getProm(){
 
     int n = 0;
 
+    prom = 0.0;
     for(double grade in grades) {
-      if(grade != -1){
+      if(grade != -1.0){
         n++;
         prom += grade;
       }
@@ -1318,6 +1358,8 @@ class _SubjectInformation extends State<SubjectInformation> {
 
     if(n != 0){
       prom /= n;
+    } else {
+      prom = -1.0;
     }
 
   }
