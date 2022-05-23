@@ -1356,11 +1356,13 @@ class _SubjectInformation extends State<SubjectInformation> {
       }
     }
 
-    if(n != 0){
-      prom /= n;
-    } else {
-      prom = -1.0;
-    }
+    setState(() {
+      if(n != 0){
+        prom /= n;
+      } else {
+        prom = -1.0;
+      }
+    });
 
   }
 
@@ -1418,6 +1420,9 @@ class _SubjectInformation extends State<SubjectInformation> {
         });
         break;
     }
+
+    getProm();
+
   }
 
 }
